@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0d10">
+  <link rel="icon" href="data:,">
+  <title>Frame Studio · OpenRouter 视频生成</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0c0d10;
+      --panel: #14161a;
+      --panel-soft: #191b20;
+      --line: #2b2e35;
+      --text: #f4f3ef;
+      --muted: #a2a3a8;
+      --faint: #6e7078;
+      --accent: #d8f36a;
+      --accent-ink: #11130a;
+      --danger: #ff8b8b;
+      --radius: 16px;
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 48% -35%, #262a2f 0, transparent 52%), var(--bg);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: wait; opacity: .65; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+    header {
+      height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 650; letter-spacing: -.02em; }
+    .brand-mark { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 10px; color: var(--accent-ink); background: var(--accent); }
+    .brand-mark svg { width: 18px; height: 18px; }
+    .top-note { color: var(--muted); font-size: 13px; }
+    main { padding: 56px 0 72px; }
+    .intro { max-width: 650px; margin-bottom: 34px; }
+    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 10px 0 9px; font-size: clamp(32px, 5vw, 48px); line-height: 1.12; letter-spacing: -.045em; font-weight: 630; }
+    .intro p { margin: 0; color: var(--muted); font-size: 16px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, .8fr); gap: 18px; align-items: start; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(150deg, rgba(255,255,255,.025), transparent 45%), var(--panel); }
+    .form-panel { padding: 24px; }
+    .side-panel { overflow: hidden; }
+    .side-head { padding: 20px 21px 17px; border-bottom: 1px solid var(--line); }
+    .side-head h2, .section-title { margin: 0; font-size: 16px; font-weight: 620; letter-spacing: -.01em; }
+    .side-head p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+    .side-body { padding: 18px 21px 21px; }
+    .field { margin-bottom: 22px; }
+    .field:last-child { margin-bottom: 0; }
+    .label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+    label, .label { font-size: 13px; color: #e4e3df; font-weight: 570; }
+    .hint, .counter { color: var(--faint); font-size: 12px; }
+    input[type="password"], select, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 10px; color: var(--text);
+      background: #0f1013; transition: border-color .18s ease, background .18s ease;
+    }
+    input[type="password"], select { min-height: 46px; padding: 0 13px; }
+    textarea { min-height: 138px; padding: 12px 13px; resize: vertical; line-height: 1.6; }
+    input:hover, select:hover, textarea:hover { border-color: #454953; }
+    input::placeholder, textarea::placeholder { color: #656770; }
+    .key-wrap { position: relative; }
+    .key-wrap input { padding-right: 48px; }
+    .icon-btn { position: absolute; top: 5px; right: 5px; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 8px; color: var(--muted); background: transparent; }
+    .icon-btn:hover { color: var(--text); background: #23252b; }
+    .icon-btn svg { width: 17px; height: 17px; }
+    .secure-note { display: flex; gap: 7px; align-items: flex-start; margin-top: 8px; color: var(--faint); font-size: 12px; }
+    .secure-note svg { flex: 0 0 14px; width: 14px; margin-top: 2px; }
+    .dropzone { min-height: 130px; border: 1px dashed #42454c; border-radius: 12px; padding: 19px; display: grid; place-items: center; text-align: center; background: #101114; transition: border-color .18s ease, background .18s ease; }
+    .dropzone.dragging { border-color: var(--accent); background: #181c12; }
+    .drop-inner { pointer-events: none; }
+    .upload-icon { width: 30px; height: 30px; margin: 0 auto 6px; color: var(--accent); }
+    .dropzone strong { display: block; font-size: 13px; font-weight: 570; }
+    .dropzone span { color: var(--muted); font-size: 12px; }
+    .browse-btn { pointer-events: auto; border: 0; padding: 0; color: var(--accent); background: transparent; text-decoration: underline; text-underline-offset: 3px; }
+    .image-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 10px; margin-top: 12px; }
+    .image-item { min-width: 0; position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #0f1013; }
+    .image-item img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+    .image-name { padding: 6px 8px; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .remove-image { position: absolute; top: 6px; right: 6px; width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.2); border-radius: 8px; color: white; background: rgba(12,13,16,.82); }
+    .remove-image:hover { color: var(--danger); background: #17191d; }
+    .remove-image svg { width: 14px; height: 14px; }
+    .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .option label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 12px; }
+    .option select { min-height: 42px; }
+    .submit-row { display: flex; align-items: center; gap: 14px; margin-top: 24px; }
+    .primary-btn { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 19px; border: 0; border-radius: 10px; color: var(--accent-ink); background: var(--accent); font-weight: 690; transition: transform .18s ease, filter .18s ease; }
+    .primary-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+    .primary-btn svg { width: 17px; height: 17px; }
+    .cost-note { color: var(--faint); font-size: 12px; }
+    .status { display: none; margin-top: 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: #101114; font-size: 13px; }
+    .status.visible { display: flex; gap: 10px; align-items: flex-start; }
+    .status.error { border-color: rgba(255,139,139,.35); color: var(--danger); }
+    .status.success { border-color: rgba(216,243,106,.35); color: var(--accent); }
+    .spinner { flex: 0 0 15px; width: 15px; height: 15px; border: 2px solid #46494f; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    .generation-flow { display: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 18px 0 0; padding: 16px 0 0; border-top: 1px solid var(--line); list-style: none; }
+    .generation-flow.visible { display: grid; }
+    .flow-step { position: relative; display: grid; justify-items: center; gap: 7px; color: var(--faint); font-size: 11px; text-align: center; }
+    .flow-step:not(:last-child)::after { position: absolute; z-index: 0; top: 14px; left: calc(50% + 17px); width: calc(100% - 34px); height: 1px; background: var(--line); content: ""; }
+    .flow-node { z-index: 1; display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--muted); background: var(--panel); font-size: 12px; }
+    .flow-step.active { color: var(--text); }
+    .flow-step.active .flow-node { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 3px rgba(216,243,106,.1); }
+    .flow-step.done { color: var(--text); }
+    .flow-step.done .flow-node { border-color: var(--accent); color: var(--accent-ink); background: var(--accent); font-weight: 700; }
+    .flow-step.failed, .flow-step.failed .flow-node { color: var(--danger); }
+    .flow-step.failed .flow-node { border-color: var(--danger); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .preview { padding: 14px; background: #0d0e11; }
+    .preview-placeholder { min-height: 210px; display: grid; place-items: center; border: 1px dashed #34373e; border-radius: 11px; color: var(--faint); text-align: center; font-size: 13px; }
+    .preview-placeholder svg { display: block; width: 34px; height: 34px; margin: 0 auto 8px; color: #6b6e77; }
+    video { display: block; width: 100%; max-height: 410px; border-radius: 11px; background: #050506; }
+    .result-actions { display: none; padding: 13px 14px 15px; }
+    .result-actions.visible { display: block; }
+    .download-btn { width: 100%; min-height: 43px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #41444c; border-radius: 9px; color: var(--text); background: #1c1e23; font-size: 13px; font-weight: 590; text-decoration: none; }
+    .download-btn:hover { border-color: #676b75; background: #25272d; }
+    .download-btn svg { width: 16px; height: 16px; }
+    .model-badge { display: inline-flex; align-items: center; gap: 7px; margin-top: 17px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 11px; }
+    .model-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    footer { margin-top: 22px; color: var(--faint); font-size: 12px; }
+    footer a { color: var(--muted); text-underline-offset: 3px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 28px, 560px); }
+      header { height: 64px; }
+      .top-note { display: none; }
+      main { padding: 36px 0 48px; }
+      .workspace { grid-template-columns: 1fr; }
+      .form-panel { padding: 18px; }
+      .side-panel { grid-row: 2; }
+    }
+    @media (max-width: 420px) {
+      .options { grid-template-columns: 1fr 1fr; }
+      .option:last-child { grid-column: 1 / -1; }
+      .submit-row { align-items: stretch; flex-direction: column; }
+      .cost-note { text-align: center; }
+      .generation-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+      .flow-step::after { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="shell">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 17.5 17.5 5l1.5 1.5L6.5 19H5v-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m13 6 5 5M5 19l4.3-1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      <span>Frame Studio</span>
+    </div>
+    <div class="top-note">OpenRouter 视频生成 · 本机安全转发</div>
+  </header>
+
+  <main class="shell">
+    <section class="intro" aria-labelledby="page-title">
+      <div class="eyebrow">Image to video</div>
+      <h1 id="page-title">让静帧开始讲故事。</h1>
+      <p>放入你的视觉素材，描述想要的镜头与动作。选择模型后，生成并下载视频。</p>
+      <div class="model-badge"><span class="model-dot"></span><span id="modelBadge">SpaceXAI · Grok Imagine Video 1.5 Lite</span></div>
+    </section>
+
+    <div class="workspace">
+      <form class="panel form-panel" id="generatorForm">
+        <div class="field">
+          <div class="label-row"><label for="apiKey">OpenRouter API 密钥</label><span class="hint">必填</span></div>
+          <div class="key-wrap">
+            <input id="apiKey" name="apiKey" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false" required>
+            <button class="icon-btn" id="toggleKey" type="button" aria-label="显示 API 密钥" title="显示/隐藏密钥">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>
+            </button>
+          </div>
+          <div class="secure-note"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="4.3" y="8.3" width="11.4" height="8.2" rx="1.8" stroke="currentColor" stroke-width="1.4"/><path d="M6.8 8.3V6a3.2 3.2 0 0 1 6.4 0v2.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span>密钥只在本页内存和本机代理请求中使用，不会写入浏览器存储或文件。</span></div>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><label for="model">生成模型</label></div>
+          <select id="model" name="model">
+            <option value="x-ai/grok-imagine-video-1.5-lite">SpaceXAI · Grok Imagine Video 1.5 Lite</option>
+            <option value="bytedance/seedance-2.0-mini">ByteDance · Seedance 2.0 Mini</option>
+            <option value="heygen/heygen-video-1">HeyGen · HeyGen Video（多参考图）</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><span class="label">图片素材</span><span class="hint" id="imageHint">Grok 仅支持一张首帧</span><span class="counter" id="imageCount">0 张</span></div>
+          <div class="dropzone" id="dropzone">
+            <div class="drop-inner">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.7" stroke="currentColor" stroke-width="1.5"/><path d="m5 17 4.2-4 3.1 2.6 2.6-2.2L19 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <strong>拖放图片到这里，或 <button class="browse-btn" id="browseButton" type="button">浏览文件</button></strong>
+              <span>PNG、JPG 或 WebP，可多选</span>
+            </div>
+          </div>
+          <input class="sr-only" id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+          <div class="image-list" id="imageList" aria-live="polite"></div>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><label for="prompt">提示词</label><span class="counter" id="promptCount">0 / 2000</span></div>
+          <textarea id="prompt" name="prompt" maxlength="2000" placeholder="描述主体如何运动、镜头如何移动，以及氛围和光线变化……" required></textarea>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><span class="label">视频设置</span></div>
+          <div class="options">
+            <div class="option"><label for="duration">时长</label><select id="duration" name="duration"></select></div>
+            <div class="option"><label for="resolution">清晰度</label><select id="resolution" name="resolution"></select></div>
+            <div class="option"><label for="aspectRatio">画幅</label><select id="aspectRatio" name="aspectRatio"></select></div>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <button class="primary-btn" id="generateButton" type="submit"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m13.2 2.8-1.8 6.7-6.5 2.1 6.5 1.9 1.8 6.7 1.9-6.7 6.5-1.9-6.5-2.1-1.9-6.7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m5 3 .6 2.1L7.7 6 5.6 6.7 5 8.8l-.7-2.1L2.2 6l2.1-.9L5 3Z" fill="currentColor"/></svg><span>生成视频</span></button>
+          <span class="cost-note">生成会产生 OpenRouter 费用</span>
+        </div>
+        <ol class="generation-flow" id="generationFlow" aria-label="视频生成流程" aria-live="polite">
+          <li class="flow-step" data-flow-step><span class="flow-node">1</span><span>准备图片</span></li>
+          <li class="flow-step" data-flow-step><span class="flow-node">2</span><span>提交任务</span></li>
+          <li class="flow-step" data-flow-step><span class="flow-node">3</span><span>等待生成</span></li>
+          <li class="flow-step" data-flow-step><span class="flow-node">4</span><span>下载结果</span></li>
+        </ol>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </form>
+
+      <aside class="panel side-panel" aria-labelledby="result-title">
+        <div class="side-head"><h2 id="result-title">生成结果</h2><p>完成后可在这里预览并下载</p></div>
+        <div class="preview" id="preview">
+          <div class="preview-placeholder"><div><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.5"/><path d="m10 9 5 3-5 3V9Z" fill="currentColor"/></svg>生成的视频将显示在这里</div></div>
+        </div>
+        <div class="result-actions" id="resultActions"><a class="download-btn" id="downloadLink" download="generated-video.mp4"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4.5 16.5v2A2 2 0 0 0 6.5 20.5h11a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>下载视频</a></div>
+      </aside>
+    </div>
+    <footer>图片素材和提示词将发送至 OpenRouter 及其所选模型提供方处理。<a href="https://openrouter.ai/docs/guides/overview/multimodal/video-generation" target="_blank" rel="noreferrer">查看接口说明</a></footer>
+  </main>
+
+  <script>
+    const API = "/api/v1";
+    const GROK_MODEL = "x-ai/grok-imagine-video-1.5-lite";
+    const HEYGEN_MODEL = "heygen/heygen-video-1";
+    const MODELS = {
+      [GROK_MODEL]: { name: "SpaceXAI · Grok Imagine Video 1.5 Lite", minDuration: 1, maxDuration: 15, resolutions: ["480p", "720p", "1080p"], aspectRatios: ["16:9", "9:16", "1:1", "4:3", "3:4"] },
+      "bytedance/seedance-2.0-mini": { name: "ByteDance · Seedance 2.0 Mini", minDuration: 4, maxDuration: 15, resolutions: ["480p", "720p"], aspectRatios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"] },
+      [HEYGEN_MODEL]: { name: "HeyGen · HeyGen Video", minDuration: 5, maxDuration: 15, resolutions: ["480p", "768p", "2K"], defaultResolution: "768p", aspectRatios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"] }
+    };
+    const files = [];
+    const form = document.querySelector("#generatorForm");
+    const modelInput = document.querySelector("#model");
+    const durationInput = document.querySelector("#duration");
+    const resolutionInput = document.querySelector("#resolution");
+    const imageInput = document.querySelector("#imageInput");
+    const imageList = document.querySelector("#imageList");
+    const statusBox = document.querySelector("#status");
+    const generationFlow = document.querySelector("#generationFlow");
+    const generateButton = document.querySelector("#generateButton");
+    let resultUrl = "";
+
+    function updateModelOptions() {
+      const model = MODELS[modelInput.value];
+      document.querySelector("#modelBadge").textContent = model.name;
+      document.querySelector("#imageHint").textContent = modelInput.value === GROK_MODEL ? "Grok 仅支持一张首帧" : `${model.name.split(" · ")[0]} 支持多张参考图`;
+      durationInput.replaceChildren(...Array.from({ length: model.maxDuration - model.minDuration + 1 }, (_, i) => {
+        const seconds = model.minDuration + i;
+        return new Option(`${seconds} 秒`, seconds, false, seconds === 5);
+      }));
+      resolutionInput.replaceChildren(...model.resolutions.map(value => new Option(value, value, false, value === (model.defaultResolution || "720p"))));
+      document.querySelector("#aspectRatio").replaceChildren(...model.aspectRatios.map(value => new Option(value, value, false, value === "16:9")));
+    }
+
+    function renderImages() {
+      imageList.replaceChildren(...files.map((file, index) => {
+        const item = document.createElement("div");
+        item.className = "image-item";
+        const image = document.createElement("img");
+        image.src = file.preview;
+        image.alt = file.file.name;
+        const name = document.createElement("div");
+        name.className = "image-name";
+        name.textContent = file.file.name;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "remove-image";
+        remove.setAttribute("aria-label", `移除 ${file.file.name}`);
+        remove.innerHTML = '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+        remove.addEventListener("click", () => {
+          URL.revokeObjectURL(files[index].preview);
+          files.splice(index, 1);
+          renderImages();
+        });
+        item.append(image, name, remove);
+        return item;
+      }));
+      document.querySelector("#imageCount").textContent = `${files.length} 张`;
+    }
+
+    function addFiles(selected) {
+      for (const file of selected) {
+        if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+          showStatus(`不支持“${file.name}”：请选择 PNG、JPG 或 WebP 图片。`, "error");
+          continue;
+        }
+        if (files.some(item => item.file.name === file.name && item.file.size === file.size && item.file.lastModified === file.lastModified)) continue;
+        files.push({ file, preview: URL.createObjectURL(file) });
+      }
+      renderImages();
+      imageInput.value = "";
+    }
+
+    function showStatus(message, kind = "working") {
+      statusBox.className = `status visible ${kind === "error" ? "error" : kind === "success" ? "success" : ""}`;
+      statusBox.replaceChildren();
+      if (kind === "working") {
+        const spinner = document.createElement("span");
+        spinner.className = "spinner";
+        spinner.setAttribute("aria-hidden", "true");
+        statusBox.append(spinner);
+      }
+      const text = document.createElement("span");
+      text.textContent = message;
+      statusBox.append(text);
+    }
+
+    async function readDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error(`无法读取图片：${file.name || "压缩后的图片"}`));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function compressImage(file, maxDimension, quality, mimeType = "image/webp") {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const context = canvas.getContext("2d");
+      if (mimeType === "image/jpeg") {
+        context.fillStyle = "#fff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      return new Promise((resolve, reject) => canvas.toBlob(blob => {
+        if (!blob) return reject(new Error("浏览器无法压缩图片。"));
+        if (blob.type !== mimeType) return reject(new Error(`当前浏览器不支持 ${mimeType} 图片压缩，请使用新版 Chrome 或 Edge。`));
+        resolve(blob);
+      }, mimeType, quality));
+    }
+
+    async function prepareReferences(model) {
+      const maxBytes = 18 * 1024 * 1024;
+      const maxInlineImageBytes = model === HEYGEN_MODEL ? 3_600_000 : Infinity;
+      const originalBytes = files.reduce((sum, item) => sum + item.file.size, 0);
+      if (originalBytes <= maxBytes && files.every(item => item.file.size <= maxInlineImageBytes)) {
+        return Promise.all(files.map(async ({ file }) => ({
+          type: "image_url",
+          image_url: { url: await readDataUrl(file) }
+        })));
+      }
+
+      const settings = [[2560, 0.86], [1920, 0.82], [1600, 0.78], [1280, 0.74], [1024, 0.68], [768, 0.62]];
+      for (const [index, [dimension, quality]] of settings.entries()) {
+        showStatus(`图片素材较大，正在本地压缩（${index + 1}/${settings.length}）…`);
+        const mimeType = model === HEYGEN_MODEL ? "image/jpeg" : "image/webp";
+        const compressed = await Promise.all(files.map(({ file }) => compressImage(file, dimension, quality, mimeType)));
+        if (compressed.reduce((sum, image) => sum + image.size, 0) <= maxBytes && compressed.every(image => image.size <= maxInlineImageBytes)) {
+          showStatus("图片已压缩，正在提交生成任务…");
+          return Promise.all(compressed.map(async image => ({
+            type: "image_url",
+            image_url: { url: await readDataUrl(image) }
+          })));
+        }
+      }
+      throw new Error(model === HEYGEN_MODEL
+        ? "HeyGen 的单张图片仍超过内嵌图片限制，请移除部分图片或自行缩小图片后重试。"
+        : "图片压缩后仍超出请求大小限制，请减少图片数量后重试。");
+    }
+
+    async function apiRequest(url, key, options = {}, context = "OpenRouter 请求") {
+      let response;
+      try {
+        response = await fetch(url, { ...options, headers: { Authorization: `Bearer ${key}`, ...(options.headers || {}) } });
+      } catch {
+        const localAlive = await fetch("/health", { cache: "no-store" }).then(result => result.ok).catch(() => false);
+        if (localAlive) throw new Error(`本机视频服务正常，但${context}未返回响应。请检查运行 node server.mjs 的终端输出和 OpenRouter 网络连通性。`);
+        throw new Error("无法连接本机视频服务。请确认 node server.mjs 仍在运行，并通过 http://127.0.0.1:8765 打开页面；不要直接双击 index.html。");
+      }
+      if (!response.ok) {
+        let message = `${response.status} ${response.statusText}`;
+        const bodyText = await response.text();
+        try {
+          const body = JSON.parse(bodyText);
+          message = body.error?.message || body.message || message;
+        } catch { message = bodyText || message; }
+        throw new Error(message);
+      }
+      return response;
+    }
+
+    async function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    function setFlowStep(activeIndex) {
+      generationFlow.classList.add("visible");
+      generationFlow.querySelectorAll("[data-flow-step]").forEach((step, index) => {
+        const done = index < activeIndex;
+        step.classList.toggle("done", done);
+        step.classList.toggle("active", index === activeIndex);
+        step.querySelector(".flow-node").textContent = done ? "✓" : index + 1;
+        if (index === activeIndex) step.setAttribute("aria-current", "step");
+        else step.removeAttribute("aria-current");
+      });
+    }
+
+    function failFlowStep() {
+      generationFlow.querySelector(".flow-step.active")?.classList.add("failed");
+    }
+
+    function imageParameters(model, references) {
+      return model === GROK_MODEL
+        ? { frame_images: references.map(image => ({ ...image, frame_type: "first_frame" })) }
+        : { input_references: references };
+    }
+
+    async function generate(event) {
+      event.preventDefault();
+      const keyInput = document.querySelector("#apiKey");
+      const key = keyInput.value.trim();
+      const prompt = document.querySelector("#prompt").value.trim();
+      if (!key || !prompt) return;
+      if (!files.length) {
+        showStatus("请先上传至少一张图片素材。", "error");
+        imageInput.focus();
+        return;
+      }
+      if (modelInput.value === GROK_MODEL && files.length > 1) {
+        showStatus("Grok Imagine Video 1.5 Lite 只支持一张首帧图片。请移除多余图片，或切换到 Seedance 2.0 Mini 使用多张参考图。", "error");
+        return;
+      }
+
+      keyInput.value = "";
+      generateButton.disabled = true;
+      generateButton.querySelector("span").textContent = "正在提交…";
+      document.querySelector("#resultActions").classList.remove("visible");
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+      resultUrl = "";
+
+      try {
+        setFlowStep(0);
+        showStatus("正在准备图片并提交生成任务…");
+        const references = await prepareReferences(modelInput.value);
+        setFlowStep(1);
+        showStatus("图片已准备，正在提交生成任务…");
+        const model = modelInput.value;
+        const payload = {
+          model,
+          prompt,
+          duration: Number(durationInput.value),
+          resolution: resolutionInput.value,
+          aspect_ratio: document.querySelector("#aspectRatio").value,
+          ...imageParameters(model, references)
+        };
+        const submitted = await apiRequest(`${API}/videos`, key, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }, "提交生成任务");
+        const job = await submitted.json();
+        if (!job.id) throw new Error("OpenRouter 没有返回任务编号。");
+        const pollUrl = job.polling_url ? new URL(job.polling_url, "http://localhost/api/v1/").pathname : `${API}/videos/${encodeURIComponent(job.id)}`;
+        if (!/^\/api\/v1\/videos\/[A-Za-z0-9_-]+$/.test(pollUrl)) throw new Error("收到无效的任务查询地址。");
+
+        const startedAt = Date.now();
+        let state = job;
+        setFlowStep(2);
+        showStatus("任务已提交，正在等待模型生成…");
+        while (["pending", "in_progress"].includes(state.status)) {
+          if (Date.now() - startedAt > 20 * 60 * 1000) throw new Error("等待超过 20 分钟。任务可能仍在 OpenRouter 运行；可稍后重新查看账户或再次生成。");
+          await wait(5000);
+          const response = await apiRequest(pollUrl, key, {}, "查询任务状态");
+          state = await response.json();
+          showStatus(state.status === "in_progress" ? "模型正在生成视频…" : "任务排队中…");
+        }
+        if (state.status !== "completed") throw new Error(state.error || `生成任务结束，状态：${state.status || "未知"}`);
+
+        setFlowStep(3);
+        showStatus("生成完成，正在下载视频…");
+        const videoResponse = await apiRequest(`${API}/videos/${encodeURIComponent(job.id)}/content?index=0`, key, {}, "下载视频");
+        const video = await videoResponse.blob();
+        resultUrl = URL.createObjectURL(video);
+        const player = document.createElement("video");
+        player.controls = true;
+        player.playsInline = true;
+        player.src = resultUrl;
+        player.setAttribute("aria-label", "生成的视频预览");
+        document.querySelector("#preview").replaceChildren(player);
+        const download = document.querySelector("#downloadLink");
+        download.href = resultUrl;
+        download.download = `openrouter-video-${new Date().toISOString().replace(/[:.]/g, "-")}.mp4`;
+        document.querySelector("#resultActions").classList.add("visible");
+        setFlowStep(4);
+        const cost = state.usage?.cost;
+        showStatus(cost == null ? "视频已生成，可在右侧预览并下载。" : `视频已生成 · 本次费用 $${Number(cost).toFixed(4)}，可在右侧预览并下载。`, "success");
+      } catch (error) {
+        failFlowStep();
+        showStatus(error.message || "请求失败，请检查网络、密钥和模型设置。", "error");
+      } finally {
+        generateButton.disabled = false;
+        generateButton.querySelector("span").textContent = "生成视频";
+      }
+    }
+
+    modelInput.addEventListener("change", updateModelOptions);
+    document.querySelector("#browseButton").addEventListener("click", () => imageInput.click());
+    imageInput.addEventListener("change", () => addFiles(imageInput.files));
+    document.querySelector("#toggleKey").addEventListener("click", event => {
+      const input = document.querySelector("#apiKey");
+      const visible = input.type === "password";
+      input.type = visible ? "text" : "password";
+      event.currentTarget.setAttribute("aria-label", visible ? "隐藏 API 密钥" : "显示 API 密钥");
+    });
+    document.querySelector("#prompt").addEventListener("input", event => {
+      document.querySelector("#promptCount").textContent = `${event.currentTarget.value.length} / 2000`;
+    });
+    const dropzone = document.querySelector("#dropzone");
+    dropzone.addEventListener("dragover", event => { event.preventDefault(); dropzone.classList.add("dragging"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragging"));
+    dropzone.addEventListener("drop", event => { event.preventDefault(); dropzone.classList.remove("dragging"); addFiles(event.dataTransfer.files); });
+    form.addEventListener("submit", generate);
+    updateModelOptions();
+    if (location.protocol === "file:") {
+      showStatus("请先在此目录运行 node server.mjs，再访问 http://127.0.0.1:8765。直接双击 index.html 无法连接本机视频服务。", "error");
+    }
+  </script>
+</body>
+</html>
+
