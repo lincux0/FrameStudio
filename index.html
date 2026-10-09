@@ -196,12 +196,12 @@
         </div>
 
         <div class="field">
-          <div class="label-row"><span class="label">图片素材</span><span class="hint" id="imageHint">Grok 仅支持一张首帧</span><span class="counter" id="imageCount">0 张</span></div>
+          <div class="label-row"><span class="label">参考图（可选）</span><span class="hint" id="imageHint">不上传图片即可文生视频</span><span class="counter" id="imageCount">0 张</span></div>
           <div class="dropzone" id="dropzone">
             <div class="drop-inner">
               <svg class="upload-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.7" stroke="currentColor" stroke-width="1.5"/><path d="m5 17 4.2-4 3.1 2.6 2.6-2.2L19 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <strong>拖放图片到这里，或 <button class="browse-btn" id="browseButton" type="button">浏览文件</button></strong>
-              <span>PNG、JPG 或 WebP，可多选</span>
+              <span>PNG、JPG 或 WebP，可多选；留空则根据提示词生成</span>
             </div>
           </div>
           <input class="sr-only" id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" multiple>
@@ -270,7 +270,7 @@
     function updateModelOptions() {
       const model = MODELS[modelInput.value];
       document.querySelector("#modelBadge").textContent = model.name;
-      document.querySelector("#imageHint").textContent = modelInput.value === GROK_MODEL ? "Grok 仅支持一张首帧" : `${model.name.split(" · ")[0]} 支持多张参考图`;
+      document.querySelector("#imageHint").textContent = modelInput.value === GROK_MODEL ? "可不上传；上传时仅支持一张首帧" : "可不上传；也支持多张参考图";
       durationInput.replaceChildren(...Array.from({ length: model.maxDuration - model.minDuration + 1 }, (_, i) => {
         const seconds = model.minDuration + i;
         return new Option(`${seconds} 秒`, seconds, false, seconds === 5);
@@ -430,6 +430,7 @@
     }
 
     function imageParameters(model, references) {
+      if (!references.length) return {};
       return model === GROK_MODEL
         ? { frame_images: references.map(image => ({ ...image, frame_type: "first_frame" })) }
         : { input_references: references };
@@ -441,11 +442,6 @@
       const key = keyInput.value.trim();
       const prompt = document.querySelector("#prompt").value.trim();
       if (!key || !prompt) return;
-      if (!files.length) {
-        showStatus("请先上传至少一张图片素材。", "error");
-        imageInput.focus();
-        return;
-      }
       if (modelInput.value === GROK_MODEL && files.length > 1) {
         showStatus("Grok Imagine Video 1.5 Lite 只支持一张首帧图片。请移除多余图片，或切换到 Seedance 2.0 Mini 使用多张参考图。", "error");
         return;
